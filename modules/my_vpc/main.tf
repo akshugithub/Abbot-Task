@@ -84,4 +84,52 @@ resource "aws_route_table_association" "private_subnet_rt_association" {
   route_table_id = aws_route_table.private_route_table.id
 }
 
-    
+# creating security groups
+resource "aws_security_group" "securitygroup" {
+  name        = "securitygroup"
+  description = "security group for EC2 Instances"
+  vpc_id      = aws_vpc.vpc.id
+
+  ingress {
+    from_port   = 443
+    protocol    = "TCP"
+    to_port     = 443
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+   
+  ingress {
+    from_port   = 80
+    protocol    = "TCP"
+    to_port     = 80
+    cidr_blocks = ["0.0.0.0/0"]
+  } 
+
+  ingress {
+    from_port   = 22
+    protocol    = "TCP"
+    to_port     = 22
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    protocol    = "-1"
+    to_port     = 0
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+    tags = {
+    Name = "${var.project_name}-${var.environment}-securitygroup"
+  }
+} 
+
+# creating EC2 instance
+resource "aws_instance" "ec2_instance" {
+
+    ami = var.ami_id
+    instance_type          = var.web_instance_type
+    vpc_security_group_ids = [aws_security_group.securitygroup.id]
+    subnet_id              = aws_subnet.pubsub.id
+    key_name               = var.key_name 
+    associate_public_ip_address = true
+}
